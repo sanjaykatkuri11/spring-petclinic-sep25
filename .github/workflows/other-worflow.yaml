@@ -1,0 +1,47 @@
+---
+name: Other maven steps for ci
+on:
+    pull_request:
+      branches: 
+        - main
+    workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  actions: read
+  security-events: write
+
+jobs:
+    manual:
+        runs-on: ubuntu-24.04
+
+        steps:
+          - uses: actions/checkout@v5
+          - uses: ./.github/actions/setup-java
+            with:
+                java-version: '21'
+          - name: Initialize CodeQL
+            uses: github/codeql-action/init@v3
+            with:
+                languages: java
+          - name: build package
+            uses: ./.github/actions/maven-build
+            with:
+                goal: package
+          - name: Perform CodeQL Analysis
+            uses: github/codeql-action/analyze@v3
+          - name: publish test results
+            uses: EnricoMi/publish-unit-test-result-action@v2
+            with:
+              files: |
+                **/target/surefire-reports/*.xml
+          - name: Uploading packaged jar files
+            uses: actions/upload-artifact@v4
+            with:
+              name: spring-petclinic.jar
+              path: '**/target/*.jar'
+          
+          
+            
